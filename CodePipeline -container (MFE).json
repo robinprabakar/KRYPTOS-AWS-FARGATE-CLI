@@ -1,0 +1,226 @@
+{
+    "pipeline": {
+        "name": "Filmio-Container",
+        "roleArn": "arn:aws:iam::067691045905:role/service-role/AWSCodePipelineServiceRole-us-east-2-Filmio-Container",
+        "artifactStore": {
+            "type": "S3",
+            "location": "codepipeline-us-east-2-41876815000"
+        },
+        "stages": [
+            {
+                "name": "Source",
+                "actions": [
+                    {
+                        "name": "Source",
+                        "actionTypeId": {
+                            "category": "Source",
+                            "owner": "ThirdParty",
+                            "provider": "GitHub",
+                            "version": "1"
+                        },
+                        "runOrder": 1,
+                        "configuration": {
+                            "Branch": "UAT",
+                            "OAuthToken": "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",
+                            "Owner": "VanjiMuthuP",
+                            "PollForSourceChanges": "false",
+                            "Repo": "MFE"
+                        },
+                        "outputArtifacts": [
+                            {
+                                "name": "SourceArtifact"
+                            }
+                        ],
+                        "inputArtifacts": [],
+                        "region": "us-east-2",
+                        "namespace": "SourceVariables"
+                    }
+                ]
+            },
+            {
+                "name": "Build",
+                "actions": [
+                    {
+                        "name": "Build",
+                        "actionTypeId": {
+                            "category": "Build",
+                            "owner": "AWS",
+                            "provider": "CodeBuild",
+                            "version": "1"
+                        },
+                        "runOrder": 1,
+                        "configuration": {
+                            "EnvironmentVariables": "[{\"name\":\"PRODUCTION_DOMAIN\",\"value\":\"https://d38opt956tci35.cloudfront.net\",\"type\":\"PLAINTEXT\"}]",
+                            "ProjectName": "container"
+                        },
+                        "outputArtifacts": [
+                            {
+                                "name": "BuildArtifact"
+                            }
+                        ],
+                        "inputArtifacts": [
+                            {
+                                "name": "SourceArtifact"
+                            }
+                        ],
+                        "region": "us-east-2",
+                        "namespace": "BuildVariables"
+                    }
+                ]
+            },
+            {
+                "name": "DEV",
+                "actions": [
+                    {
+                        "name": "Deploy",
+                        "actionTypeId": {
+                            "category": "Deploy",
+                            "owner": "AWS",
+                            "provider": "S3",
+                            "version": "1"
+                        },
+                        "runOrder": 1,
+                        "configuration": {
+                            "BucketName": "auth-dev-test-filmio",
+                            "Extract": "true",
+                            "ObjectKey": "container/latest"
+                        },
+                        "outputArtifacts": [],
+                        "inputArtifacts": [
+                            {
+                                "name": "BuildArtifact"
+                            }
+                        ],
+                        "region": "us-east-2"
+                    }
+                ]
+            },
+            {
+                "name": "TEST",
+                "actions": [
+                    {
+                        "name": "Codebuild",
+                        "actionTypeId": {
+                            "category": "Build",
+                            "owner": "AWS",
+                            "provider": "CodeBuild",
+                            "version": "1"
+                        },
+                        "runOrder": 1,
+                        "configuration": {
+                            "EnvironmentVariables": "[{\"name\":\"PRODUCTION_DOMAIN\",\"value\":\"https://d2zet4ql9imcja.cloudfront.net\",\"type\":\"PLAINTEXT\"}]",
+                            "ProjectName": "container"
+                        },
+                        "outputArtifacts": [],
+                        "inputArtifacts": [
+                            {
+                                "name": "SourceArtifact"
+                            }
+                        ],
+                        "region": "us-east-2"
+                    },
+                    {
+                        "name": "Approval",
+                        "actionTypeId": {
+                            "category": "Approval",
+                            "owner": "AWS",
+                            "provider": "Manual",
+                            "version": "1"
+                        },
+                        "runOrder": 2,
+                        "configuration": {},
+                        "outputArtifacts": [],
+                        "inputArtifacts": [],
+                        "region": "us-east-2"
+                    },
+                    {
+                        "name": "Deploy",
+                        "actionTypeId": {
+                            "category": "Deploy",
+                            "owner": "AWS",
+                            "provider": "S3",
+                            "version": "1"
+                        },
+                        "runOrder": 3,
+                        "configuration": {
+                            "BucketName": "auth-dev-test-filmio",
+                            "Extract": "true",
+                            "ObjectKey": "container/latest"
+                        },
+                        "outputArtifacts": [],
+                        "inputArtifacts": [
+                            {
+                                "name": "BuildArtifact"
+                            }
+                        ],
+                        "region": "us-east-2"
+                    }
+                ]
+            },
+            {
+                "name": "PROD",
+                "actions": [
+                    {
+                        "name": "BUILD",
+                        "actionTypeId": {
+                            "category": "Build",
+                            "owner": "AWS",
+                            "provider": "CodeBuild",
+                            "version": "1"
+                        },
+                        "runOrder": 1,
+                        "configuration": {
+                            "EnvironmentVariables": "[{\"name\":\"PRODUCTION_DOMAIN\",\"value\":\"https://d1wcc6qhh108ad.cloudfront.net\",\"type\":\"PLAINTEXT\"}]",
+                            "ProjectName": "container"
+                        },
+                        "outputArtifacts": [],
+                        "inputArtifacts": [
+                            {
+                                "name": "SourceArtifact"
+                            }
+                        ],
+                        "region": "us-east-2"
+                    },
+                    {
+                        "name": "Approval",
+                        "actionTypeId": {
+                            "category": "Approval",
+                            "owner": "AWS",
+                            "provider": "Manual",
+                            "version": "1"
+                        },
+                        "runOrder": 2,
+                        "configuration": {},
+                        "outputArtifacts": [],
+                        "inputArtifacts": [],
+                        "region": "us-east-2"
+                    },
+                    {
+                        "name": "Deploy",
+                        "actionTypeId": {
+                            "category": "Deploy",
+                            "owner": "AWS",
+                            "provider": "S3",
+                            "version": "1"
+                        },
+                        "runOrder": 3,
+                        "configuration": {
+                            "BucketName": "auth-dev-test-filmio",
+                            "Extract": "true",
+                            "ObjectKey": "container/latest"
+                        },
+                        "outputArtifacts": [],
+                        "inputArtifacts": [
+                            {
+                                "name": "BuildArtifact"
+                            }
+                        ],
+                        "region": "us-east-2"
+                    }
+                ]
+            }
+        ],
+        "version": 2
+    }
+
+}
